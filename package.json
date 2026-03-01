@@ -1,0 +1,9 @@
+{
+  "name": "book-database",
+  "version": "1.0.0",
+  "description": "本のデータベースWebアプリ - Google Drive連携",
+  "scripts": {
+    "dev": "npx -y live-server public --port=5500",
+    "start": "npx -y live-server public --port=5500"
+  }
+}
