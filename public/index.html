@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="ja" data-theme="dark">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,9 +8,12 @@
   <title>📚 本のデータベース</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
   <!-- ログイン画面 -->
   <div id="login-screen" class="login-screen">
@@ -19,10 +23,18 @@
       <p class="login-subtitle">Google Driveの本棚にアクセス</p>
       <button id="btn-signin" class="btn-signin" onclick="handleSignIn()">
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-          <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
-          <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/>
-          <path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
-          <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+          <path
+            d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"
+            fill="#4285F4" />
+          <path
+            d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z"
+            fill="#34A853" />
+          <path
+            d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"
+            fill="#FBBC05" />
+          <path
+            d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"
+            fill="#EA4335" />
         </svg>
         Googleでサインイン
       </button>
@@ -39,23 +51,55 @@
           <h1 class="brand-title">本のデータベース</h1>
         </div>
         <div class="header-actions">
+          <button id="btn-theme" class="btn-icon" onclick="toggleTheme()" title="テーマ切替">🌙</button>
           <div class="user-info" id="user-info"></div>
           <button id="btn-signout" class="btn-signout" onclick="handleSignOut()">サインアウト</button>
         </div>
       </div>
       <div class="header-search">
         <div class="search-container">
-          <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2">
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.35-4.35" />
           </svg>
           <input type="text" id="search-input" class="search-input" placeholder="タイトルやタグで検索...">
           <button id="btn-clear-search" class="btn-clear-search hidden" onclick="clearSearch()">✕</button>
+        </div>
+      </div>
+      <!-- ツールバー -->
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <button class="toolbar-btn active" id="btn-all" onclick="setViewMode('all')">📖 すべて</button>
+          <button class="toolbar-btn" id="btn-favorites" onclick="setViewMode('favorites')">⭐ お気に入り</button>
+          <button class="toolbar-btn" id="btn-recent" onclick="setViewMode('recent')">🕐 最近開いた本</button>
+          <button class="toolbar-btn" id="btn-category" onclick="setViewMode('category')">📂 カテゴリ</button>
+        </div>
+        <div class="toolbar-right">
+          <select id="sort-select" class="sort-select" onchange="handleSort()">
+            <option value="name-asc">名前 A→Z</option>
+            <option value="name-desc">名前 Z→A</option>
+            <option value="tags-desc">タグ数 多→少</option>
+            <option value="recent">最近開いた順</option>
+          </select>
+          <button class="btn-icon" id="btn-view-toggle" onclick="toggleViewStyle()" title="表示切替">⊞</button>
+          <button class="btn-icon" id="btn-batch-tag" onclick="toggleBatchMode()" title="一括タグ編集">✏️</button>
         </div>
       </div>
       <div class="header-tags" id="tag-filter-container">
         <div class="tag-chips" id="tag-chips"></div>
       </div>
     </header>
+
+    <!-- 一括タグ編集バー -->
+    <div id="batch-bar" class="batch-bar hidden">
+      <span id="batch-count">0冊 選択中</span>
+      <div class="batch-actions">
+        <input type="text" id="batch-tag-input" class="tag-input" placeholder="タグを入力...">
+        <button class="btn-add-tag" onclick="batchAddTag()">一括追加</button>
+        <button class="btn-batch-cancel" onclick="toggleBatchMode()">キャンセル</button>
+      </div>
+    </div>
 
     <!-- ローディング -->
     <div id="loading" class="loading">
@@ -69,6 +113,9 @@
     <!-- 本のグリッド -->
     <main id="book-grid" class="book-grid"></main>
 
+    <!-- カテゴリ表示用コンテナ -->
+    <main id="category-container" class="category-container hidden"></main>
+
     <!-- 空の状態 -->
     <div id="empty-state" class="empty-state hidden">
       <div class="empty-icon">🔍</div>
@@ -81,10 +128,22 @@
     <div class="modal">
       <div class="modal-header">
         <h2 id="modal-title" class="modal-title"></h2>
-        <button class="modal-close" onclick="closeModal()">&times;</button>
+        <div class="modal-header-actions">
+          <button id="modal-fav-btn" class="btn-icon modal-fav" onclick="toggleFavorite()" title="お気に入り">☆</button>
+          <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
       </div>
       <div class="modal-body">
         <div id="modal-cover" class="modal-cover"></div>
+        <!-- 読了ステータス -->
+        <div class="modal-section">
+          <h3 class="modal-section-title">📖 読書ステータス</h3>
+          <div class="status-buttons" id="status-buttons">
+            <button class="status-btn" data-status="unread" onclick="setReadingStatus('unread')">📕 未読</button>
+            <button class="status-btn" data-status="reading" onclick="setReadingStatus('reading')">📖 読書中</button>
+            <button class="status-btn" data-status="done" onclick="setReadingStatus('done')">✅ 読了</button>
+          </div>
+        </div>
         <div class="modal-section">
           <h3 class="modal-section-title">📄 PDFファイル</h3>
           <ul id="modal-pdf-list" class="modal-pdf-list"></ul>
@@ -108,4 +167,5 @@
   <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
   <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
 </body>
+
 </html>
