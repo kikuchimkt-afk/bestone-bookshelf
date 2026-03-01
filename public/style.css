@@ -21,9 +21,6 @@
   --danger: #ef4444;
   --success: #22c55e;
   --warning: #f59e0b;
-  --status-unread: #6b7280;
-  --status-reading: #3b82f6;
-  --status-done: #22c55e;
 }
 
 [data-theme="light"] {
@@ -607,17 +604,26 @@ body::before {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #1a1a2e, #16213e);
-  color: var(--text-secondary);
-  font-size: 13px;
+  color: rgba(255, 255, 255, 0.9);
   text-align: center;
   padding: 16px;
 }
 
 .book-cover-placeholder .placeholder-icon {
-  font-size: 40px;
+  font-size: 48px;
+  font-weight: 700;
   margin-bottom: 8px;
-  opacity: 0.5;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  opacity: 0.9;
+}
+
+.book-cover-placeholder .placeholder-title {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+  opacity: 0.85;
+  word-break: break-all;
 }
 
 .book-info {
@@ -656,7 +662,7 @@ body::before {
   color: var(--accent-light);
 }
 
-/* Favorite & Status badges */
+/* Favorite badge */
 .book-fav-badge {
   position: absolute;
   top: 8px;
@@ -664,26 +670,6 @@ body::before {
   z-index: 2;
   font-size: 18px;
   filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.5));
-}
-
-.book-status-badge {
-  font-size: 10px;
-  padding: 2px 6px;
-  border-radius: 100px;
-  font-weight: 600;
-  color: #fff;
-}
-
-.book-status-badge.unread {
-  background: var(--status-unread);
-}
-
-.book-status-badge.reading {
-  background: var(--status-reading);
-}
-
-.book-status-badge.done {
-  background: var(--status-done);
 }
 
 /* List view card */
@@ -1013,59 +999,56 @@ body::before {
   margin-bottom: 8px;
 }
 
-/* ===== Status Buttons ===== */
-.status-buttons {
-  display: flex;
-  gap: 6px;
-}
-
-.status-btn {
-  flex: 1;
-  padding: 8px 10px;
-  background: var(--bg-glass);
-  border: 1px solid var(--border-subtle);
-  border-radius: 10px;
-  color: var(--text-secondary);
-  font-size: 12px;
-  font-weight: 500;
-  font-family: inherit;
-  cursor: pointer;
-  transition: 0.2s ease;
-  text-align: center;
-}
-
-.status-btn:hover {
-  background: var(--bg-glass-strong);
-  color: var(--text-primary);
-}
-
-.status-btn.active[data-status="unread"] {
-  background: var(--status-unread);
-  color: #fff;
-  border-color: var(--status-unread);
-}
-
-.status-btn.active[data-status="reading"] {
-  background: var(--status-reading);
-  color: #fff;
-  border-color: var(--status-reading);
-}
-
-.status-btn.active[data-status="done"] {
-  background: var(--status-done);
-  color: #fff;
-  border-color: var(--status-done);
-}
-
-/* ===== PDF List ===== */
-.modal-pdf-list {
-  list-style: none;
+/* ===== File Browser ===== */
+.file-browser-header {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
+  margin-bottom: 8px;
 }
 
-.pdf-item {
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.breadcrumb-item {
+  cursor: pointer;
+  color: var(--accent-light);
+  transition: 0.2s;
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 12px;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.breadcrumb-item:hover {
+  background: var(--bg-glass);
+  text-decoration: underline;
+}
+
+.breadcrumb-sep {
+  color: var(--text-muted);
+}
+
+.breadcrumb-current {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.file-browser {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.file-item {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -1079,35 +1062,91 @@ body::before {
   color: var(--text-primary);
 }
 
-.pdf-item:hover {
+.file-item:hover {
   background: var(--bg-glass-strong);
   border-color: var(--accent);
   transform: translateX(4px);
   box-shadow: 0 2px 12px var(--accent-glow);
 }
 
-.pdf-icon {
+.file-item.folder-item {
+  border-left: 3px solid var(--accent);
+}
+
+.file-icon {
   font-size: 20px;
   flex-shrink: 0;
 }
 
-.pdf-name {
+.file-name {
   font-size: 13px;
   font-weight: 500;
   flex: 1;
   word-break: break-all;
 }
 
-.pdf-open-icon {
+.file-arrow {
   color: var(--text-muted);
   font-size: 14px;
   flex-shrink: 0;
-  transition: 0.2s ease;
+  transition: 0.2s;
 }
 
-.pdf-item:hover .pdf-open-icon {
+.file-item:hover .file-arrow {
   color: var(--accent-light);
 }
+
+.file-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 20px;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.loading-spinner.small {
+  width: 20px;
+  height: 20px;
+  border-width: 2px;
+}
+
+/* ===== Refresh Toast ===== */
+.refresh-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px 20px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 100px;
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  z-index: 200;
+  animation: toastIn 0.3s ease;
+}
+
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+/* Refresh spin animation */
+.btn-icon.spinning {
+  animation: spin 0.8s linear infinite;
+}
+
+
 
 /* ===== Modal Tags ===== */
 .modal-tags-list {

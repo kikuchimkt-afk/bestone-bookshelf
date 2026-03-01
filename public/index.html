@@ -43,7 +43,6 @@
 
   <!-- メインアプリ -->
   <div id="app" class="app hidden">
-    <!-- ヘッダー -->
     <header class="header">
       <div class="header-top">
         <div class="header-brand">
@@ -51,6 +50,7 @@
           <h1 class="brand-title">本のデータベース</h1>
         </div>
         <div class="header-actions">
+          <button id="btn-refresh" class="btn-icon" onclick="refreshBooks()" title="本棚を更新">🔄</button>
           <button id="btn-theme" class="btn-icon" onclick="toggleTheme()" title="テーマ切替">🌙</button>
           <div class="user-info" id="user-info"></div>
           <button id="btn-signout" class="btn-signout" onclick="handleSignOut()">サインアウト</button>
@@ -67,7 +67,6 @@
           <button id="btn-clear-search" class="btn-clear-search hidden" onclick="clearSearch()">✕</button>
         </div>
       </div>
-      <!-- ツールバー -->
       <div class="toolbar">
         <div class="toolbar-left">
           <button class="toolbar-btn active" id="btn-all" onclick="setViewMode('all')">📖 すべて</button>
@@ -102,21 +101,19 @@
     </div>
 
     <!-- ローディング -->
-    <div id="loading" class="loading">
+    <div id="loading" class="loading hidden">
       <div class="loading-spinner"></div>
       <p class="loading-text">本棚を読み込んでいます...</p>
     </div>
 
-    <!-- 本の数 -->
+    <!-- リフレッシュ通知 -->
+    <div id="refresh-toast" class="refresh-toast hidden">
+      <span id="refresh-toast-text"></span>
+    </div>
+
     <div id="book-count" class="book-count hidden"></div>
-
-    <!-- 本のグリッド -->
     <main id="book-grid" class="book-grid"></main>
-
-    <!-- カテゴリ表示用コンテナ -->
     <main id="category-container" class="category-container hidden"></main>
-
-    <!-- 空の状態 -->
     <div id="empty-state" class="empty-state hidden">
       <div class="empty-icon">🔍</div>
       <p class="empty-text">該当する本が見つかりません</p>
@@ -135,18 +132,17 @@
       </div>
       <div class="modal-body">
         <div id="modal-cover" class="modal-cover"></div>
-        <!-- 読了ステータス -->
+        <!-- ファイルブラウザ -->
         <div class="modal-section">
-          <h3 class="modal-section-title">📖 読書ステータス</h3>
-          <div class="status-buttons" id="status-buttons">
-            <button class="status-btn" data-status="unread" onclick="setReadingStatus('unread')">📕 未読</button>
-            <button class="status-btn" data-status="reading" onclick="setReadingStatus('reading')">📖 読書中</button>
-            <button class="status-btn" data-status="done" onclick="setReadingStatus('done')">✅ 読了</button>
+          <div class="file-browser-header">
+            <h3 class="modal-section-title">📁 ファイル</h3>
+            <div id="breadcrumb" class="breadcrumb"></div>
           </div>
-        </div>
-        <div class="modal-section">
-          <h3 class="modal-section-title">📄 PDFファイル</h3>
-          <ul id="modal-pdf-list" class="modal-pdf-list"></ul>
+          <div id="file-browser" class="file-browser"></div>
+          <div id="file-loading" class="file-loading hidden">
+            <div class="loading-spinner small"></div>
+            <span>読み込み中...</span>
+          </div>
         </div>
         <div class="modal-section">
           <h3 class="modal-section-title">🏷️ タグ</h3>

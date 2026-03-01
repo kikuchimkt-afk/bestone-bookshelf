@@ -3,14 +3,15 @@ let tokenClient;
 let gapiInited = false;
 let gisInited = false;
 let allBooks = [];
-let tagsData = {};      // { "本名": { tags:[], favorite:bool, status:str, lastOpened:str } }
+let tagsData = {};
 let tagsFileId = null;
 let activeTagFilters = new Set();
 let currentBookFolder = null;
-let currentViewMode = 'all';     // all, favorites, recent, category
-let currentViewStyle = 'grid';   // grid, list
+let currentViewMode = 'all';
+let currentViewStyle = 'grid';
 let batchMode = false;
 let batchSelected = new Set();
+let modalBrowsePath = []; // breadcrumb stack: [{id, name}]
 
 // ===== Google API Initialization =====
 function gapiLoaded() {
@@ -90,6 +91,39 @@ function loadThemePreference() {
     }
 }
 
+// ===== Refresh =====
+async function refreshBooks() {
+    const btn = document.getElementById('btn-refresh');
+    btn.classList.add('spinning');
+    btn.disabled = true;
+
+    const oldCount = allBooks.length;
+    try {
+        await loadBooks();
+        const newCount = allBooks.length;
+        const diff = newCount - oldCount;
+        if (diff > 0) {
+            showToast(`🎉 ${diff}冊の新しい本を追加しました！`);
+        } else if (diff === 0) {
+            showToast('✅ 本棚は最新の状態です');
+        } else {
+            showToast(`📚 本棚を更新しました（${newCount}冊）`);
+        }
+    } catch (err) {
+        showToast('⚠️ 更新に失敗しました');
+    } finally {
+        btn.classList.remove('spinning');
+        btn.disabled = false;
+    }
+}
+
+function showToast(text) {
+    const toast = document.getElementById('refresh-toast');
+    document.getElementById('refresh-toast-text').textContent = text;
+    toast.classList.remove('hidden');
+    setTimeout(() => toast.classList.add('hidden'), 3000);
+}
+
 // ===== Data Loading =====
 async function loadBooks() {
     const loading = document.getElementById('loading');
@@ -141,10 +175,11 @@ async function loadBookFolder(folder) {
 
         const files = res.result.files || [];
         const pdfs = files.filter(f => f.mimeType === 'application/pdf');
+        const folders = files.filter(f => f.mimeType === 'application/vnd.google-apps.folder');
         const images = files.filter(f => f.mimeType && f.mimeType.startsWith('image/'));
         const coverImage = images.length > 0 ? images[0] : null;
 
-        if (pdfs.length === 0 && images.length === 0) return null;
+        if (pdfs.length === 0 && images.length === 0 && folders.length === 0) return null;
 
         const meta = getBookMeta(folder.name);
 
@@ -152,11 +187,11 @@ async function loadBookFolder(folder) {
             id: folder.id,
             name: folder.name,
             pdfs,
+            subfolders: folders,
             coverImage,
             createdTime: folder.createdTime,
             tags: meta.tags || [],
             favorite: meta.favorite || false,
-            status: meta.status || 'unread',
             lastOpened: meta.lastOpened || null,
         };
     } catch (err) {
@@ -168,9 +203,8 @@ async function loadBookFolder(folder) {
 // ===== Tags / Metadata =====
 function getBookMeta(bookName) {
     const data = tagsData[bookName];
-    if (!data) return { tags: [], favorite: false, status: 'unread', lastOpened: null };
-    // Backward compatibility: if data is an array, it's old format (tags only)
-    if (Array.isArray(data)) return { tags: data, favorite: false, status: 'unread', lastOpened: null };
+    if (!data) return { tags: [], favorite: false, lastOpened: null };
+    if (Array.isArray(data)) return { tags: data, favorite: false, lastOpened: null };
     return data;
 }
 
@@ -189,11 +223,10 @@ async function loadTags() {
             tagsFileId = files[0].id;
             const content = await gapi.client.drive.files.get({ fileId: tagsFileId, alt: 'media' });
             const raw = typeof content.body === 'string' ? JSON.parse(content.body) : content.result || {};
-            // Migrate old format
             tagsData = {};
             for (const [key, val] of Object.entries(raw)) {
                 if (Array.isArray(val)) {
-                    tagsData[key] = { tags: val, favorite: false, status: 'unread', lastOpened: null };
+                    tagsData[key] = { tags: val, favorite: false, lastOpened: null };
                 } else {
                     tagsData[key] = val;
                 }
@@ -264,14 +297,12 @@ function getFilteredBooks() {
     let books = [...allBooks];
     const searchQuery = document.getElementById('search-input').value.toLowerCase().trim();
 
-    // View mode filter
     if (currentViewMode === 'favorites') {
         books = books.filter(b => b.favorite);
     } else if (currentViewMode === 'recent') {
         books = books.filter(b => b.lastOpened).sort((a, b) => new Date(b.lastOpened) - new Date(a.lastOpened));
     }
 
-    // Search filter
     if (searchQuery) {
         books = books.filter(book => {
             const nameMatch = book.name.toLowerCase().includes(searchQuery);
@@ -280,7 +311,6 @@ function getFilteredBooks() {
         });
     }
 
-    // Tag filter
     if (activeTagFilters.size > 0) {
         books = books.filter(book => {
             const bookTags = book.tags || [];
@@ -288,7 +318,6 @@ function getFilteredBooks() {
         });
     }
 
-    // Sort
     const sortVal = document.getElementById('sort-select').value;
     if (currentViewMode !== 'recent') {
         books = sortBooks(books, sortVal);
@@ -299,20 +328,15 @@ function getFilteredBooks() {
 
 function sortBooks(books, sortVal) {
     switch (sortVal) {
-        case 'name-asc':
-            return books.sort((a, b) => a.name.localeCompare(b.name, 'ja'));
-        case 'name-desc':
-            return books.sort((a, b) => b.name.localeCompare(a.name, 'ja'));
-        case 'tags-desc':
-            return books.sort((a, b) => (b.tags?.length || 0) - (a.tags?.length || 0));
-        case 'recent':
-            return books.sort((a, b) => {
-                const da = a.lastOpened ? new Date(a.lastOpened) : new Date(0);
-                const db = b.lastOpened ? new Date(b.lastOpened) : new Date(0);
-                return db - da;
-            });
-        default:
-            return books;
+        case 'name-asc': return books.sort((a, b) => a.name.localeCompare(b.name, 'ja'));
+        case 'name-desc': return books.sort((a, b) => b.name.localeCompare(a.name, 'ja'));
+        case 'tags-desc': return books.sort((a, b) => (b.tags?.length || 0) - (a.tags?.length || 0));
+        case 'recent': return books.sort((a, b) => {
+            const da = a.lastOpened ? new Date(a.lastOpened) : new Date(0);
+            const db = b.lastOpened ? new Date(b.lastOpened) : new Date(0);
+            return db - da;
+        });
+        default: return books;
     }
 }
 
@@ -354,18 +378,13 @@ function renderBooks(filtered) {
     grid.innerHTML = filtered.map((book, i) => {
         const coverHtml = book.coverImage
             ? `<img class="book-cover" src="https://drive.google.com/thumbnail?id=${book.coverImage.id}&sz=w400" alt="${escapeHtml(book.name)}" loading="lazy">`
-            : `<div class="book-cover-placeholder"><span class="placeholder-icon">📖</span><span>${escapeHtml(book.name)}</span></div>`;
+            : generatePlaceholder(book.name);
 
         const tagsHtml = (book.tags || []).slice(0, 2).map(t =>
             `<span class="book-tag-mini">${escapeHtml(t)}</span>`
         ).join('');
 
         const favHtml = book.favorite ? '<span class="book-fav-badge">⭐</span>' : '';
-
-        const statusLabel = { unread: '未読', reading: '読書中', done: '読了' };
-        const statusHtml = book.status && book.status !== 'unread'
-            ? `<span class="book-status-badge ${book.status}">${statusLabel[book.status] || ''}</span>`
-            : '';
 
         const selectedClass = batchSelected.has(book.id) ? 'batch-selected' : '';
         const onclick = batchMode
@@ -381,7 +400,6 @@ function renderBooks(filtered) {
           <div class="book-title" title="${escapeHtml(book.name)}">${escapeHtml(book.name)}</div>
           <div class="book-meta">
             <span class="book-pdf-count">📄 ${book.pdfs.length}</span>
-            ${statusHtml}
             ${tagsHtml}
           </div>
         </div>
@@ -395,7 +413,6 @@ function renderCategoryView() {
     const emptyState = document.getElementById('empty-state');
     const bookCount = document.getElementById('book-count');
 
-    // Group books by tags
     const categories = {};
     const untagged = [];
 
@@ -410,7 +427,6 @@ function renderCategoryView() {
         }
     });
 
-    // Sort categories by count
     const sortedCats = Object.entries(categories)
         .sort(([, a], [, b]) => b.length - a.length);
 
@@ -459,7 +475,7 @@ function renderCategoryView() {
 function renderMiniCard(book) {
     const coverHtml = book.coverImage
         ? `<img class="book-cover" src="https://drive.google.com/thumbnail?id=${book.coverImage.id}&sz=w300" alt="${escapeHtml(book.name)}" loading="lazy">`
-        : `<div class="book-cover-placeholder"><span class="placeholder-icon">📖</span></div>`;
+        : generatePlaceholder(book.name);
     const favHtml = book.favorite ? '<span class="book-fav-badge">⭐</span>' : '';
 
     return `
@@ -535,7 +551,7 @@ function openBookModal(folderId) {
     const meta = getBookMeta(book.name);
     meta.lastOpened = book.lastOpened;
     setBookMeta(book.name, meta);
-    saveTags(); // async, no await needed
+    saveTags();
 
     const modal = document.getElementById('pdf-modal');
     document.getElementById('modal-title').textContent = book.name;
@@ -554,26 +570,121 @@ function openBookModal(folderId) {
         coverEl.style.display = 'none';
     }
 
-    // Reading status
-    document.querySelectorAll('.status-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.status === (book.status || 'unread'));
-    });
-
-    // PDF list
-    document.getElementById('modal-pdf-list').innerHTML = book.pdfs.map(pdf => `
-    <li>
-      <a class="pdf-item" href="https://drive.google.com/file/d/${pdf.id}/view" target="_blank" rel="noopener noreferrer">
-        <span class="pdf-icon">📄</span>
-        <span class="pdf-name">${escapeHtml(pdf.name)}</span>
-        <span class="pdf-open-icon">↗</span>
-      </a>
-    </li>
-  `).join('');
+    // File browser - start at root of this book
+    modalBrowsePath = [{ id: book.id, name: book.name }];
+    browseFolder(book.id);
 
     renderModalTags();
 
     modal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
+}
+
+// ===== File Browser =====
+async function browseFolder(folderId) {
+    const browser = document.getElementById('file-browser');
+    const fileLoading = document.getElementById('file-loading');
+
+    browser.innerHTML = '';
+    fileLoading.classList.remove('hidden');
+    renderBreadcrumb();
+
+    try {
+        const res = await gapi.client.drive.files.list({
+            q: `'${folderId}' in parents and trashed = false`,
+            fields: 'files(id, name, mimeType, webViewLink)',
+            pageSize: 200,
+            orderBy: 'folder,name',
+        });
+
+        const files = res.result.files || [];
+        const folders = files.filter(f => f.mimeType === 'application/vnd.google-apps.folder');
+        const pdfs = files.filter(f => f.mimeType === 'application/pdf');
+        const otherFiles = files.filter(f => f.mimeType !== 'application/vnd.google-apps.folder' && f.mimeType !== 'application/pdf' && !(f.mimeType && f.mimeType.startsWith('image/')));
+
+        let html = '';
+
+        // Back button (if not at root)
+        if (modalBrowsePath.length > 1) {
+            html += `<div class="file-item folder-item" onclick="navigateUp()">
+                <span class="file-icon">⬆️</span>
+                <span class="file-name">上のフォルダに戻る</span>
+                <span class="file-arrow"></span>
+            </div>`;
+        }
+
+        // Folders
+        folders.forEach(f => {
+            html += `<div class="file-item folder-item" onclick="navigateInto('${f.id}', '${escapeAttr(f.name)}')">
+                <span class="file-icon">📁</span>
+                <span class="file-name">${escapeHtml(f.name)}</span>
+                <span class="file-arrow">→</span>
+            </div>`;
+        });
+
+        // PDFs
+        pdfs.forEach(f => {
+            html += `<a class="file-item" href="https://drive.google.com/file/d/${f.id}/view" target="_blank" rel="noopener noreferrer">
+                <span class="file-icon">📄</span>
+                <span class="file-name">${escapeHtml(f.name)}</span>
+                <span class="file-arrow">↗</span>
+            </a>`;
+        });
+
+        // Other files
+        otherFiles.forEach(f => {
+            html += `<a class="file-item" href="https://drive.google.com/file/d/${f.id}/view" target="_blank" rel="noopener noreferrer">
+                <span class="file-icon">📎</span>
+                <span class="file-name">${escapeHtml(f.name)}</span>
+                <span class="file-arrow">↗</span>
+            </a>`;
+        });
+
+        if (folders.length === 0 && pdfs.length === 0 && otherFiles.length === 0) {
+            html = '<div style="color: var(--text-muted); font-size: 13px; padding: 12px; text-align: center;">このフォルダにファイルはありません</div>';
+        }
+
+        browser.innerHTML = html;
+    } catch (err) {
+        console.error('Error browsing folder:', err);
+        browser.innerHTML = '<div style="color: var(--text-muted); font-size: 13px; padding: 12px;">読み込みに失敗しました</div>';
+    } finally {
+        fileLoading.classList.add('hidden');
+    }
+}
+
+function navigateInto(folderId, folderName) {
+    modalBrowsePath.push({ id: folderId, name: folderName });
+    browseFolder(folderId);
+}
+
+function navigateUp() {
+    if (modalBrowsePath.length > 1) {
+        modalBrowsePath.pop();
+        const current = modalBrowsePath[modalBrowsePath.length - 1];
+        browseFolder(current.id);
+    }
+}
+
+function navigateTo(index) {
+    if (index < modalBrowsePath.length - 1) {
+        modalBrowsePath = modalBrowsePath.slice(0, index + 1);
+        browseFolder(modalBrowsePath[index].id);
+    }
+}
+
+function renderBreadcrumb() {
+    const breadcrumb = document.getElementById('breadcrumb');
+    if (modalBrowsePath.length <= 1) {
+        breadcrumb.innerHTML = '';
+        return;
+    }
+    breadcrumb.innerHTML = modalBrowsePath.map((item, i) => {
+        if (i === modalBrowsePath.length - 1) {
+            return `<span class="breadcrumb-current">${escapeHtml(item.name)}</span>`;
+        }
+        return `<button class="breadcrumb-item" onclick="navigateTo(${i})">${escapeHtml(item.name)}</button><span class="breadcrumb-sep">/</span>`;
+    }).join('');
 }
 
 function renderModalTags() {
@@ -589,6 +700,7 @@ function closeModal() {
     document.getElementById('pdf-modal').classList.add('hidden');
     document.body.style.overflow = '';
     currentBookFolder = null;
+    modalBrowsePath = [];
 }
 
 document.getElementById('pdf-modal').addEventListener('click', (e) => {
@@ -608,23 +720,6 @@ async function toggleFavorite() {
     const favBtn = document.getElementById('modal-fav-btn');
     favBtn.textContent = currentBookFolder.favorite ? '★' : '☆';
     favBtn.classList.toggle('favorited', currentBookFolder.favorite);
-
-    await saveTags();
-    renderCurrentView();
-}
-
-// ===== Reading Status =====
-async function setReadingStatus(status) {
-    if (!currentBookFolder) return;
-    currentBookFolder.status = status;
-
-    const meta = getBookMeta(currentBookFolder.name);
-    meta.status = status;
-    setBookMeta(currentBookFolder.name, meta);
-
-    document.querySelectorAll('.status-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.status === status);
-    });
 
     await saveTags();
     renderCurrentView();
@@ -727,4 +822,31 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+function escapeAttr(text) {
+    return text.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+}
+
+function generateCoverStyle(name) {
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+        hash = hash & hash;
+    }
+    const h1 = ((hash & 0xFF) % 360);
+    const h2 = (h1 + 40 + (hash >> 8 & 0x3F)) % 360;
+    const h3 = (h2 + 40 + (hash >> 16 & 0x3F)) % 360;
+    const angle = (hash >> 24 & 0xFF) % 360;
+    return `background: linear-gradient(${angle}deg, hsl(${h1},70%,35%), hsl(${h2},65%,45%), hsl(${h3},60%,30%));`;
+}
+
+function generatePlaceholder(name) {
+    const style = generateCoverStyle(name);
+    const initial = name.charAt(0);
+    const shortName = name.length > 20 ? name.substring(0, 20) + '…' : name;
+    return `<div class="book-cover-placeholder" style="${style}">
+        <span class="placeholder-icon">${initial}</span>
+        <span class="placeholder-title">${escapeHtml(shortName)}</span>
+    </div>`;
 }
