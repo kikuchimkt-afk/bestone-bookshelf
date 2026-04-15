@@ -1298,3 +1298,129 @@ body::before {
     gap: 2px;
   }
 }
+
+/* ===== Help Modal ===== */
+.help-modal {
+  max-width: 560px;
+}
+
+.help-body {
+  padding: 20px 24px 28px;
+}
+
+.help-section {
+  padding: 4px 0;
+}
+
+.help-section-icon {
+  font-size: 28px;
+  margin-bottom: 6px;
+}
+
+.help-section-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+  letter-spacing: -0.3px;
+}
+
+.help-divider {
+  height: 1px;
+  background: var(--border-subtle);
+  margin: 18px 0;
+}
+
+/* Steps */
+.help-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.help-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  transition: 0.2s ease;
+}
+
+.help-step:hover {
+  background: var(--bg-glass-strong);
+  border-color: var(--border-hover);
+}
+
+.help-step-num {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  min-width: 26px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.help-step-text {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-primary);
+  padding-top: 2px;
+}
+
+.help-step-text code {
+  padding: 2px 6px;
+  background: var(--tag-bg);
+  border: 1px solid var(--tag-border);
+  border-radius: 4px;
+  font-size: 12px;
+  color: var(--accent-light);
+  font-family: 'Menlo', 'Consolas', monospace;
+}
+
+.help-note {
+  margin-top: 10px;
+  padding: 10px 14px;
+  background: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  border-radius: 10px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* Features */
+.help-features {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.help-feature {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  color: var(--text-primary);
+  line-height: 1.5;
+  transition: 0.2s ease;
+}
+
+.help-feature:hover {
+  background: var(--bg-glass);
+}
+
+.help-feature-icon {
+  font-size: 18px;
+  min-width: 24px;
+  text-align: center;
+}

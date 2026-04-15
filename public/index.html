@@ -50,6 +50,7 @@
           <h1 class="brand-title">本のデータベース</h1>
         </div>
         <div class="header-actions">
+          <button id="btn-help" class="btn-icon" onclick="openHelp()" title="使い方マニュアル">❓</button>
           <button id="btn-refresh" class="btn-icon" onclick="refreshBooks()" title="本棚を更新">🔄</button>
           <button id="btn-theme" class="btn-icon" onclick="toggleTheme()" title="テーマ切替">🌙</button>
           <div class="user-info" id="user-info"></div>
@@ -117,6 +118,140 @@
     <div id="empty-state" class="empty-state hidden">
       <div class="empty-icon">🔍</div>
       <p class="empty-text">該当する本が見つかりません</p>
+    </div>
+  </div>
+
+  <!-- 使い方マニュアルモーダル -->
+  <div id="help-modal" class="modal-overlay hidden">
+    <div class="modal help-modal">
+      <div class="modal-header">
+        <h2 class="modal-title">📖 使い方マニュアル</h2>
+        <div class="modal-header-actions">
+          <button class="modal-close" onclick="closeHelp()">&times;</button>
+        </div>
+      </div>
+      <div class="modal-body help-body">
+
+        <div class="help-section">
+          <div class="help-section-icon">📚</div>
+          <h3 class="help-section-title">新しい本を登録する</h3>
+          <div class="help-steps">
+            <div class="help-step">
+              <span class="help-step-num">1</span>
+              <div class="help-step-text">
+                <strong>Google Drive</strong> の <code>bookshelf</code> フォルダを開く
+              </div>
+            </div>
+            <div class="help-step">
+              <span class="help-step-num">2</span>
+              <div class="help-step-text">
+                <strong>新しいフォルダを作成</strong>（フォルダ名 ＝ 本のタイトル）
+              </div>
+            </div>
+            <div class="help-step">
+              <span class="help-step-num">3</span>
+              <div class="help-step-text">
+                フォルダ内に <strong>PDFファイル</strong> を入れる
+              </div>
+            </div>
+            <div class="help-step">
+              <span class="help-step-num">4</span>
+              <div class="help-step-text">
+                （任意）<strong>画像ファイル</strong> を入れると表紙サムネイルになる
+              </div>
+            </div>
+            <div class="help-step">
+              <span class="help-step-num">5</span>
+              <div class="help-step-text">
+                アプリ上で <strong>🔄 ボタン</strong> を押すと自動検出される
+              </div>
+            </div>
+          </div>
+          <div class="help-note">
+            💡 サブフォルダも作成可能。Vercelへの再デプロイは不要です。
+          </div>
+        </div>
+
+        <div class="help-divider"></div>
+
+        <div class="help-section">
+          <div class="help-section-icon">🔍</div>
+          <h3 class="help-section-title">本を探す</h3>
+          <div class="help-features">
+            <div class="help-feature">
+              <span class="help-feature-icon">🔎</span>
+              <span><strong>検索バー</strong> — タイトルやタグで検索</span>
+            </div>
+            <div class="help-feature">
+              <span class="help-feature-icon">🏷️</span>
+              <span><strong>タグフィルター</strong> — タグをクリックして絞り込み</span>
+            </div>
+            <div class="help-feature">
+              <span class="help-feature-icon">📂</span>
+              <span><strong>カテゴリ</strong> — タグ別に分類表示</span>
+            </div>
+            <div class="help-feature">
+              <span class="help-feature-icon">⭐</span>
+              <span><strong>お気に入り</strong> — よく使う本をブックマーク</span>
+            </div>
+            <div class="help-feature">
+              <span class="help-feature-icon">🕐</span>
+              <span><strong>最近開いた本</strong> — 直近に閲覧した本を表示</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="help-divider"></div>
+
+        <div class="help-section">
+          <div class="help-section-icon">📄</div>
+          <h3 class="help-section-title">本を開く・操作する</h3>
+          <div class="help-features">
+            <div class="help-feature">
+              <span class="help-feature-icon">👆</span>
+              <span>本のカードをクリック → <strong>詳細モーダル</strong> が開く</span>
+            </div>
+            <div class="help-feature">
+              <span class="help-feature-icon">📁</span>
+              <span><strong>ファイルブラウザ</strong> でサブフォルダを階層表示</span>
+            </div>
+            <div class="help-feature">
+              <span class="help-feature-icon">📄</span>
+              <span>PDFをクリック → <strong>Google Drive</strong> で閲覧</span>
+            </div>
+            <div class="help-feature">
+              <span class="help-feature-icon">🏷️</span>
+              <span>モーダル内でタグの <strong>追加・削除</strong> が可能</span>
+            </div>
+            <div class="help-feature">
+              <span class="help-feature-icon">✏️</span>
+              <span>ツールバーの ✏️ で <strong>一括タグ編集</strong> モード</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="help-divider"></div>
+
+        <div class="help-section">
+          <div class="help-section-icon">⚙️</div>
+          <h3 class="help-section-title">その他</h3>
+          <div class="help-features">
+            <div class="help-feature">
+              <span class="help-feature-icon">🌙</span>
+              <span><strong>テーマ切替</strong> — ダーク / ライトモード</span>
+            </div>
+            <div class="help-feature">
+              <span class="help-feature-icon">⊞</span>
+              <span><strong>表示切替</strong> — グリッド / リスト表示</span>
+            </div>
+            <div class="help-feature">
+              <span class="help-feature-icon">🔄</span>
+              <span><strong>更新</strong> — Google Drive と同期</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
     </div>
   </div>
 
