@@ -706,7 +706,7 @@ function closeModal() {
 document.getElementById('pdf-modal').addEventListener('click', (e) => {
     if (e.target.classList.contains('modal-overlay')) closeModal();
 });
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeHelp(); closeModal(); } });
 
 // ===== Favorite =====
 async function toggleFavorite() {
@@ -850,3 +850,20 @@ function generatePlaceholder(name) {
         <span class="placeholder-title">${escapeHtml(shortName)}</span>
     </div>`;
 }
+
+// ===== Help Modal =====
+function openHelp() {
+    document.getElementById('help-modal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeHelp() {
+    document.getElementById('help-modal').classList.add('hidden');
+    if (!document.getElementById('pdf-modal').classList.contains('hidden')) return;
+    document.body.style.overflow = '';
+}
+
+document.getElementById('help-modal').addEventListener('click', (e) => {
+    if (e.target.classList.contains('modal-overlay')) closeHelp();
+});
+
